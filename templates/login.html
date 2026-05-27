@@ -15,12 +15,12 @@
     <div class="row">
         <div class="col-md-4"></div>
         <div class="col-md-4">
-            <form action="{{ url_for('dashboard')}}" method="post">
+            <form method="POST" action="{{ url_for('login') }}">
                 <label for="email" class="form-label">Email address</label>
-                <input name="userEmail" type="email" class="form-control" id="email">
+                <input name="enteredEmail" type="email" class="form-control" id="email">
 
                 <label for="password" class="form-label">Password</label>
-                <input name="userPassword" type="password" class="form-control" id="password">
+                <input name="enteredPassword" type="password" class="form-control" id="password">
 
                 <div class="form-check form-switch py-3">
                     <input class="form-check-input" type="checkbox" role="switch" id="switch" checked>

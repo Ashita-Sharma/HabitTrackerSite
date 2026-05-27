@@ -1,4 +1,5 @@
 from flask import Flask, redirect, url_for, render_template, request, flash
+from flask import session
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -13,7 +14,7 @@ def init_db():
     with sqlite3.connect("database.db") as conn:
         conn.execute("""
         CREATE TABLE IF NOT EXISTS PARTICIPANTS (
-        
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             email TEXT,
             password TEXT
@@ -22,6 +23,12 @@ def init_db():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
+    if request.method == 'POST':
+        # process the task data here
+        task_name = request.form['TaskName']
+        description = request.form['TextDescription']
+        deadline = request.form['Deadline']
+
     return render_template('dashboard.html')
 
 @app.route('/new-task', methods=['GET', 'POST'])
@@ -69,8 +76,19 @@ def login():
         email = request.form['enteredEmail']
         password = request.form['enteredPassword']
 
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, username, password FROM PARTICIPANTS WHERE email = ?", (email,))
+            user = cursor.fetchone()
 
-    return render_template('login.html')
+        if user and check_password_hash(user[2], password):
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Invalid email or password", "danger")
+
+    return render_template("login.html")
 
 @app.route('/participants')
 def participants():
@@ -81,6 +99,19 @@ def participants():
 
     return render_template("participants.html", data=data)
 
+@app.route('/delete-user/<int:user_id>')
+def delete_user(user_id):
+    with sqlite3.connect("database.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM PARTICIPANTS WHERE id = ?", (user_id,))
+        conn.commit()
+
+    return redirect(url_for('participants'))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 # @app.route('/all_tasks', methods=['POST'])
 # def read_form():
