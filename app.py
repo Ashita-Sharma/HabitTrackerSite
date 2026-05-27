@@ -20,16 +20,43 @@ def init_db():
             password TEXT
         )
         """)
+        conn.execute("""
+                CREATE TABLE IF NOT EXISTS TASKS (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    task_name TEXT,
+                    description TEXT,
+                    deadline TEXT,
+                    FOREIGN KEY (user_id) REFERENCES PARTICIPANTS(id)
+                )
+                """)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
-        # process the task data here
         task_name = request.form['TaskName']
         description = request.form['TextDescription']
         deadline = request.form['Deadline']
 
-    return render_template('dashboard.html')
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO TASKS (user_id, task_name, description, deadline) VALUES (?, ?, ?, ?)",
+                (session['user_id'], task_name, description, deadline)
+            )
+            conn.commit()
+
+        return redirect(url_for('dashboard'))  # <-- this is the key line
+
+    with sqlite3.connect("database.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM TASKS WHERE user_id = ?", (session['user_id'],))
+        tasks = cursor.fetchall()
+
+    return render_template('dashboard.html', tasks=tasks)
 
 @app.route('/new-task', methods=['GET', 'POST'])
 def new_task():

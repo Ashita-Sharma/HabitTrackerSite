@@ -11,6 +11,25 @@
 
 <body>
     <h1 class="text-center py-5">Add a new task</h1>
+    <h2>Your Tasks</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Task</th>
+            <th>Description</th>
+            <th>Deadline</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task[2] }}</td>
+            <td>{{ task[3] }}</td>
+            <td>{{ task[4] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
     <div class="row">
         <div class="col-md-4"></div>
