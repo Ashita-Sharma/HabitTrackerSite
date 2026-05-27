@@ -1,5 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, flash
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
 app.secret_key = "mysecretkey"
 
@@ -7,11 +9,16 @@ app.secret_key = "mysecretkey"
 def reroute():
     return redirect(url_for('sign_up'))
 
-connect = sqlite3.connect('database.db')
-connect.execute(
-    'CREATE TABLE IF NOT EXISTS PARTICIPANTS (username TEXT, \
-    email TEXT, password TEXT)')
-
+def init_db():
+    with sqlite3.connect("database.db") as conn:
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS PARTICIPANTS (
+        
+            username TEXT,
+            email TEXT,
+            password TEXT
+        )
+        """)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -44,11 +51,13 @@ def sign_up():
         if password != confirm_password:
             flash("Passwords do not match", "danger")
             return redirect(url_for('sign_up'))
+
+        hashed_password = generate_password_hash(password)
         with sqlite3.connect("database.db") as users:
             cursor = users.cursor()
             cursor.execute("INSERT INTO PARTICIPANTS \
             (username,email,password) VALUES (?,?,?)",
-                           (username, email, password))
+                           (username, email, hashed_password))
             users.commit()
         return redirect(url_for('dashboard'))
 
@@ -56,15 +65,20 @@ def sign_up():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        email = request.form['enteredEmail']
+        password = request.form['enteredPassword']
+
+
     return render_template('login.html')
 
 @app.route('/participants')
 def participants():
-    connect = sqlite3.connect('database.db')
-    cursor = connect.cursor()
-    cursor.execute('SELECT * FROM PARTICIPANTS')
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM PARTICIPANTS')
+        data = cursor.fetchall()
 
-    data = cursor.fetchall()
     return render_template("participants.html", data=data)
 
 
@@ -79,4 +93,5 @@ def participants():
 
 
 if __name__ == "__main__":
+    init_db()
     app.run(debug=True)
