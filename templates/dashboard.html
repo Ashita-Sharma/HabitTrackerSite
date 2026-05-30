@@ -23,7 +23,18 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
-
+        <!-- Search Bar -->
+<form method="GET" action="{{ url_for('dashboard') }}" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control" placeholder="Search tasks..." value="{{ search_query }}">
+        <input type="hidden" name="filter" value="{{ filter_by }}">
+        <input type="hidden" name="sort" value="{{ sort_by }}">
+        <button type="submit" class="btn btn-outline-primary">Search</button>
+        {% if search_query %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
         <!-- Filter and sort controls -->
         <div class="d-flex gap-2 mb-3">
             <a href="?filter=all&sort={{ sort_by }}" class="btn btn-sm {{ 'btn-primary' if filter_by == 'all' else 'btn-outline-primary' }}">All</a>

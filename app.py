@@ -8,7 +8,10 @@ app.secret_key = "mysecretkey"
 
 @app.route('/')
 def reroute():
-    return redirect(url_for('sign_up'))
+    if 'user_id' not in session:
+        return redirect(url_for('sign_up'))
+    return redirect(url_for('dashboard'))
+
 
 def init_db():
     with sqlite3.connect("database.db") as conn:
@@ -56,12 +59,17 @@ def dashboard():
         flash("Task added!", "success")
         return redirect(url_for('dashboard'))
 
-    # Get filter and sort from URL parameters
     filter_by = request.args.get('filter', 'all')
     sort_by = request.args.get('sort', 'deadline')
+    search_query = request.args.get('search', '')
 
     query = "SELECT * FROM TASKS WHERE user_id = ?"
     params = [session['user_id']]
+
+    if search_query:
+        query += " AND (task_name LIKE ? OR description LIKE ?)"
+        params.append(f"%{search_query}%")
+        params.append(f"%{search_query}%")
 
     if filter_by == 'pending':
         query += " AND completed = 0"
@@ -80,7 +88,7 @@ def dashboard():
         cursor.execute(query, params)
         tasks = cursor.fetchall()
 
-    return render_template('dashboard.html', tasks=tasks, filter_by=filter_by, sort_by=sort_by)
+    return render_template('dashboard.html', tasks=tasks, filter_by=filter_by, sort_by=sort_by, search_query=search_query)
 
 @app.route('/new-task', methods=['GET', 'POST'])
 def new_task():
@@ -90,26 +98,37 @@ def new_task():
 
 @app.route('/sign_up', methods=['GET', 'POST'])
 def sign_up():
+    if 'user_id' in session:
+        flash('Already logged in!', 'warning')
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         email = request.form['userEmail']
         username = request.form['userId']
         password = request.form['userPassword']
         confirm_password = request.form['ConfirmUserPassword']
         if not email:
-            flash('Email is required', 'danger')
+            flash('Email is required!', 'danger')
             return redirect(url_for('sign_up'))
         if not username:
-            flash('Username is required', 'warning')
+            flash('Username is required!', 'warning')
             return redirect(url_for('sign_up'))
         if not password:
-            flash('Password field is required', 'danger')
+            flash('Password field is required!', 'danger')
             return redirect(url_for('sign_up'))
         if len(password) < 8:
-            flash("Password must be at least 8 characters", "warning")
+            flash("Password must be at least 8 characters!", "warning")
             return redirect(url_for('sign_up'))
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM PARTICIPANTS WHERE email = ?", (email,))
+            user = cursor.fetchone()
+            if user:
+                flash("E-Mail already in use!", "danger")
+                return redirect(url_for('sign_up'))
 
         if password != confirm_password:
-            flash("Passwords do not match", "danger")
+            flash("Passwords do not match!", "danger")
             return redirect(url_for('sign_up'))
 
         hashed_password = generate_password_hash(password)
@@ -119,12 +138,16 @@ def sign_up():
             (username,email,password) VALUES (?,?,?)",
                            (username, email, hashed_password))
             users.commit()
-        return redirect(url_for('dashboard'))
+        flash("Account created! Please log in.", "success")
+        return redirect(url_for('login'))
 
     return render_template('sign_up.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'user_id' in session:
+        flash('Already logged in!', 'warning')
+        return redirect(url_for('dashboard'))
     if request.method == 'POST':
         email = request.form['enteredEmail']
         password = request.form['enteredPassword']

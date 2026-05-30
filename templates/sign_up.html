@@ -28,7 +28,7 @@
                 <label for="email" class="form-label">Email address</label>
                 <input name="userEmail" type="email" class="form-control" id="email">
 
-                <label for="exampleInputEmail1" class="form-label">Username</label>
+                <label for="exampleInputEmail1" class="form-label">Display Name</label>
                 <input name="userId" class="form-control" id="exampleInputEmail1">
 
 
@@ -41,6 +41,7 @@
                     <label class="form-check-label" for="switch">Receive E-Mails from company?</label>
                 </div>
                 <button type="submit" class="btn btn-primary">Register</button>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Log In</a>
             </form>
         </div>
         <div class="col-md-4"></div>
