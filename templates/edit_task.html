@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Task</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-5">
+        <h1>Edit Task</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <form method="POST">
+                    <label for="TaskName" class="form-label">Task Title</label>
+                    <input name="TaskName" type="text" class="form-control" value="{{ task[2] }}" required>
+
+                    <label for="TextDescription" class="form-label">Description</label>
+                    <input name="TextDescription" type="text" class="form-control" value="{{ task[3] }}">
+
+                    <label for="Deadline" class="form-label">Deadline</label>
+                    <input type="date" name="Deadline" class="form-control" value="{{ task[4] }}">
+
+                    <label for="Priority" class="form-label">Priority</label>
+                    <select name="Priority" class="form-select">
+                        <option value="high" {{ 'selected' if task[5] == 'high' }}>High</option>
+                        <option value="medium" {{ 'selected' if task[5] == 'medium' }}>Medium</option>
+                        <option value="low" {{ 'selected' if task[5] == 'low' }}>Low</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-3">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
