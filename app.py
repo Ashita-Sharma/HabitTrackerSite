@@ -143,6 +143,61 @@ def login():
 
     return render_template("login.html")
 
+@app.route('/delete-task/<int:task_id>')
+def delete_task(task_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    with sqlite3.connect("database.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM TASKS WHERE id = ? AND user_id = ?", (task_id, session['user_id']))
+        conn.commit()
+
+    flash("Task deleted", "info")
+    return redirect(url_for('dashboard'))
+
+@app.route('/complete-task/<int:task_id>')
+def complete_task(task_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    with sqlite3.connect("database.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE TASKS SET completed = 1 WHERE id = ? AND user_id = ?", (task_id, session['user_id']))
+        conn.commit()
+
+    flash("Task marked as complete!", "success")
+    return redirect(url_for('dashboard'))
+
+@app.route('/edit-task/<int:task_id>', methods=['GET', 'POST'])
+def edit_task(task_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        task_name = request.form['TaskName']
+        description = request.form['TextDescription']
+        deadline = request.form['Deadline']
+        priority = request.form['Priority']
+
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE TASKS SET task_name = ?, description = ?, deadline = ?, priority = ? WHERE id = ? AND user_id = ?",
+                (task_name, description, deadline, priority, task_id, session['user_id'])
+            )
+            conn.commit()
+
+        flash("Task updated!", "success")
+        return redirect(url_for('dashboard'))
+
+    with sqlite3.connect("database.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM TASKS WHERE id = ? AND user_id = ?", (task_id, session['user_id']))
+        task = cursor.fetchone()
+
+    return render_template('edit_task.html', task=task)
+
 # @app.route('/participants')
 # def participants():
 #     with sqlite3.connect('database.db') as conn:

@@ -3,6 +3,10 @@
 - Password hashing
 - Session-based authentication
 - Delete users (admin feature)
+- Handling Task priority
+- Sorting Tasks by Priority or Deadline
+- Handling Task Edits and modification
+- Log Out feature
 
 ## Tech Stack
 - Flask
