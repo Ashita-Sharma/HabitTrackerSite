@@ -14,22 +14,25 @@ def init_db():
     with sqlite3.connect("database.db") as conn:
         conn.execute("""
         CREATE TABLE IF NOT EXISTS PARTICIPANTS (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             email TEXT,
             password TEXT
         )
         """)
         conn.execute("""
-                CREATE TABLE IF NOT EXISTS TASKS (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    task_name TEXT,
-                    description TEXT,
-                    deadline TEXT,
-                    FOREIGN KEY (user_id) REFERENCES PARTICIPANTS(id)
-                )
-                """)
+        CREATE TABLE IF NOT EXISTS TASKS (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            task_name TEXT,
+            description TEXT,
+            deadline TEXT,
+            priority TEXT DEFAULT 'medium',
+            completed INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES PARTICIPANTS(id)
+        )
+        """)
+
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -40,23 +43,44 @@ def dashboard():
         task_name = request.form['TaskName']
         description = request.form['TextDescription']
         deadline = request.form['Deadline']
+        priority = request.form['Priority']
 
         with sqlite3.connect("database.db") as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO TASKS (user_id, task_name, description, deadline) VALUES (?, ?, ?, ?)",
-                (session['user_id'], task_name, description, deadline)
+                "INSERT INTO TASKS (user_id, task_name, description, deadline, priority) VALUES (?, ?, ?, ?, ?)",
+                (session['user_id'], task_name, description, deadline, priority)
             )
             conn.commit()
 
-        return redirect(url_for('dashboard'))  # <-- this is the key line
+        flash("Task added!", "success")
+        return redirect(url_for('dashboard'))
+
+    # Get filter and sort from URL parameters
+    filter_by = request.args.get('filter', 'all')
+    sort_by = request.args.get('sort', 'deadline')
+
+    query = "SELECT * FROM TASKS WHERE user_id = ?"
+    params = [session['user_id']]
+
+    if filter_by == 'pending':
+        query += " AND completed = 0"
+    elif filter_by == 'completed':
+        query += " AND completed = 1"
+    elif filter_by == 'overdue':
+        query += " AND completed = 0 AND deadline < DATE('now')"
+
+    if sort_by == 'deadline':
+        query += " ORDER BY deadline ASC"
+    elif sort_by == 'priority':
+        query += " ORDER BY CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END"
 
     with sqlite3.connect("database.db") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM TASKS WHERE user_id = ?", (session['user_id'],))
+        cursor.execute(query, params)
         tasks = cursor.fetchall()
 
-    return render_template('dashboard.html', tasks=tasks)
+    return render_template('dashboard.html', tasks=tasks, filter_by=filter_by, sort_by=sort_by)
 
 @app.route('/new-task', methods=['GET', 'POST'])
 def new_task():
@@ -117,23 +141,23 @@ def login():
 
     return render_template("login.html")
 
-@app.route('/participants')
-def participants():
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM PARTICIPANTS')
-        data = cursor.fetchall()
+# @app.route('/participants')
+# def participants():
+#     with sqlite3.connect('database.db') as conn:
+#         cursor = conn.cursor()
+#         cursor.execute('SELECT * FROM PARTICIPANTS')
+#         data = cursor.fetchall()
+#
+#     return render_template("participants.html", data=data)
 
-    return render_template("participants.html", data=data)
-
-@app.route('/delete-user/<int:user_id>')
-def delete_user(user_id):
-    with sqlite3.connect("database.db") as conn:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM PARTICIPANTS WHERE id = ?", (user_id,))
-        conn.commit()
-
-    return redirect(url_for('participants'))
+# @app.route('/delete-user/<int:user_id>')
+# def delete_user(user_id):
+#     with sqlite3.connect("database.db") as conn:
+#         cursor = conn.cursor()
+#         cursor.execute("DELETE FROM PARTICIPANTS WHERE id = ?", (user_id,))
+#         conn.commit()
+#
+#     return redirect(url_for('participants'))
 
 @app.route('/logout')
 def logout():
