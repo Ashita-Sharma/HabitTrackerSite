@@ -11,7 +11,7 @@
         <h1>Welcome, {{ session['username'] }}!</h1>
         <a href="{{ url_for('new_task') }}" class="btn btn-primary mb-3">Add New Task</a>
         <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary mb-3">Logout</a>
-
+        <a href="{{ url_for('profile') }}" class="btn btn-primary mb-3">Profile</a>
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

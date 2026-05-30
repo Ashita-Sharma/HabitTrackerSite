@@ -10,6 +10,7 @@
 - Added Search Query for tasks
 - Added handling cases where a user attempts to login or sign up during an active session
 - Handling a case where an email is already in use.
+- Added ability to edit display name and email
 - Log Out feature
 
 ## Tech Stack

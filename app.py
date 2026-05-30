@@ -166,6 +166,35 @@ def login():
 
     return render_template("login.html")
 
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        flash("Please log in!", 'warning')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        email = request.form['email']
+        username = request.form['username']
+
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE PARTICIPANTS SET email = ?, username = ? WHERE id = ?",
+                (email, username, session['user_id']))
+            conn.commit()
+
+        session['username'] = username
+        flash("Profile updated!", "success")
+        return redirect(url_for('dashboard'))
+
+
+    with sqlite3.connect("database.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT email, username FROM PARTICIPANTS WHERE id = ?", (session['user_id'],))
+        user = cursor.fetchone()
+
+    return render_template('profile.html', user=user)
+
 @app.route('/delete-task/<int:task_id>')
 def delete_task(task_id):
     if 'user_id' not in session:
