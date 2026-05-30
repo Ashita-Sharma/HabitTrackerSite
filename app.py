@@ -84,6 +84,8 @@ def dashboard():
 
 @app.route('/new-task', methods=['GET', 'POST'])
 def new_task():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     return render_template('new_task.html')
 
 @app.route('/sign_up', methods=['GET', 'POST'])
